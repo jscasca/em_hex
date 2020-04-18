@@ -8,6 +8,8 @@ public class GamePlayerSrc : MonoBehaviour
     public Grid grid;
 
     public Tilemap terrainMap;
+
+    public MovementHighlighter path;
     // Start is called before the first frame update
     void Start()
     {
@@ -22,6 +24,13 @@ public class GamePlayerSrc : MonoBehaviour
             Debug.Log(string.Format("Co-ords of mouse is [X: {0} Y: {0}]", pos.x, pos.y));
             Vector3Int coord = grid.WorldToCell(pos);
             Debug.Log("Click on: " + coord.ToString());
+
+            Dictionary<string, int> movements = new Dictionary<string, int>();
+            movements.Add("plains", 3);
+            movements.Add("mountains", 6);
+            // Onliy highlight path on selecting unit
+
+            path.HighlightPath(coord, 12, movements);
 
             // if (g == null) {
             //     Debug.Log("No inst object");
