@@ -18,6 +18,12 @@ public class GamePlayerSrc : MonoBehaviour
 
 	private int state = 0;
 
+	private Vector3 _initialMousePosition = Vector3.zero;
+	private Vector3 _prevMousePos = Vector3.zero;
+	private bool _mouseDown = false;
+	private float _pressedTime = 0.0f;
+	private float _minDragTime = 1.0f;
+
 	void Awake() {
 		// set the id in cache
 		Debug.Log("Setting id");
@@ -66,44 +72,30 @@ public class GamePlayerSrc : MonoBehaviour
 	}
 
 	// Update is called once per frame
-	void Update()
-	{
+	void Update() {
+		Vector3 mousePosition = Input.mousePosition;
+		if (_mouseDown) {
+			Debug.Log("Dragging: ");
+			// start dragging the map
+			Slide(mousePosition.x - _prevMousePos.x, mousePosition.y - _prevMousePos.y, -0.08f);
+			_prevMousePos = mousePosition;
+		}
 		if (Input.GetMouseButtonDown(0)) {
-			Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-			Debug.Log(string.Format("Co-ords of mouse is [X: {0} Y: {0}]", pos.x, pos.y));
-			Vector3Int coord = grid.WorldToCell(pos);
-			Debug.Log("Click on: " + coord.ToString());
-			Territory t = map.GetTerritoryAt(coord);
-			ArmyUnit u = map.GetUnitAt(coord);
-
-			Player p = PlayerHandler.instance.GetCurrent();
-
-			// Probably work on states
-			// State 1: nothing selected
-			// Staet 2: Selected unit (waiting on move/atk)
-			// State 3: selected ability (waiting on target)
-			// State 4: multipoint ability (waiting on n targets)
-			if (u != null) {
-				// getThe Actions?
-				Debug.Log("Found unit!");
+			if (!_mouseDown) {
+				_mouseDown = true;
+				_initialMousePosition = mousePosition;
+				_prevMousePos = _initialMousePosition;
 			}
-			Dictionary<Territory.Type, int> mobMods = new Dictionary<Territory.Type, int>();
-			mobMods.Add(Territory.Type.PLAIN, 3);
-			mobMods.Add(Territory.Type.FOREST, 3);
-			mobMods.Add(Territory.Type.MOUNTAIN, 6);
-			mobMods.Add(Territory.Type.CIRCLE, 4);
-			// Onliy highlight path on selecting unit
-
-			path.HighlightPath(coord, 1, 12, mobMods);
-
-			// if (g == null) {
-			//     Debug.Log("No inst object");
-			//     // Open the menu for action? Check if the thing has the player etc...
-			// } else {
-			//     Debug.Log("Inst: " + g.ToString());
-			// }
-
-			// check if there is a tile there?
+		}
+		if (Input.GetMouseButtonUp(0)) {
+			_mouseDown = false;
+			float distance = Vector3.Distance(mousePosition, _initialMousePosition);
+			// Didnt drag, just clicked
+			Debug.Log("Dragged : " + distance);
+			if (distance == 0) {
+				Vector3 pos = Camera.main.ScreenToWorldPoint(mousePosition);
+				ClickOn(pos);
+			}
 		}
 		if (Input.GetKey(KeyCode.LeftControl)) {
 			//
@@ -116,8 +108,8 @@ public class GamePlayerSrc : MonoBehaviour
 			}
 		} else {
 			if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow)) {
-			// move view
-				Camera.main.transform.Translate (Input.GetAxisRaw("Horizontal")*2,Input.GetAxisRaw("Vertical")*2, 0);
+				// Camera.main.transform.Translate (Input.GetAxisRaw("Horizontal")*2,Input.GetAxisRaw("Vertical")*2, 0);
+				Slide(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 2);
 			}
 		}
 		if (Input.GetKeyDown(KeyCode.Z)) {
@@ -130,8 +122,38 @@ public class GamePlayerSrc : MonoBehaviour
 		}
 	}
 
+	void Slide(float x, float y, float factor) {
+		Camera.main.transform.Translate (x * factor, y * factor, 0);
+	}
+
 	void Zoom(bool zoomIn) {
 		// Camera.main.transform.Translate(0, 0, zoomIn ? 1 : -1);
 		Camera.main.orthographicSize = Mathf.MoveTowards(Camera.main.orthographicSize, Camera.main.orthographicSize + (zoomIn? 1: -1), 2);
+	}
+
+	void ClickOn(Vector3 pos) {
+		Vector3Int coord = grid.WorldToCell(pos);
+		Debug.Log("Click on: " + coord.ToString());
+		Territory t = map.GetTerritoryAt(coord);
+		ArmyUnit u = map.GetUnitAt(coord);
+
+		Player p = PlayerHandler.instance.GetCurrent();
+
+		// Probably work on states
+		// State 1: nothing selected
+		// Staet 2: Selected unit (waiting on move/atk)
+		// State 3: selected ability (waiting on target)
+		// State 4: multipoint ability (waiting on n targets)
+		if (u != null) {
+			// getThe Actions?
+			Debug.Log("Found unit!");
+		}
+		Dictionary<Territory.Type, int> mobMods = new Dictionary<Territory.Type, int>();
+		mobMods.Add(Territory.Type.PLAIN, 3);
+		mobMods.Add(Territory.Type.FOREST, 3);
+		mobMods.Add(Territory.Type.MOUNTAIN, 6);
+		mobMods.Add(Territory.Type.CIRCLE, 4);
+		// Onliy highlight path on selecting unit
+		path.HighlightPath(coord, 1, 12, mobMods);
 	}
 }
