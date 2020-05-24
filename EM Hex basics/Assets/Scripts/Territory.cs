@@ -23,15 +23,15 @@ public class Territory {
     return type;
   }
 
-  public bool isBase() {
+  public bool IsSummoningCircle() {
     return type == Type.CIRCLE;
   }
 
-  public void setController(Player p) {
+  public void SetController(Player p) {
     controller = p;
   }
 
-  public bool isControlled() {
+  public bool IsControlled() {
     return controller != null;
   }
 }
