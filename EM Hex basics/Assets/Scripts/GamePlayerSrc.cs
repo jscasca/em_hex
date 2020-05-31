@@ -12,11 +12,13 @@ public class GamePlayerSrc : MonoBehaviour
 
 	public MovementHighlighter path;
 
+	// Static instances
 	private TerrainManager map;
+	private MenuHandler menus;
 
 	private string playerId = null;
 
-	private int state = 0;
+	private int _state = 0;
 
 	private Vector3 _initialMousePosition = Vector3.zero;
 	private Vector3 _prevMousePos = Vector3.zero;
@@ -34,6 +36,7 @@ public class GamePlayerSrc : MonoBehaviour
 	void Start()
 	{
 		map = TerrainManager.instance;
+		menus = MenuHandler.instance;
 	}
 
 	bool IsMyPlayer(Player p) {
@@ -41,14 +44,6 @@ public class GamePlayerSrc : MonoBehaviour
 			return p != null && p.GetId() == playerId;
 		}
 		return false;
-	}
-
-	void SelectCoord(Vector3Int coord) {
-		// first check state
-		switch(state) {
-			case 1: OtherSelection(coord); break;
-			default: BasicSelection(coord); break;
-		}
 	}
 
 	void BasicSelection(Vector3Int coord) {
@@ -73,9 +68,12 @@ public class GamePlayerSrc : MonoBehaviour
 
 	// Update is called once per frame
 	void Update() {
+		if (MenuHandler.instance.IsMenuOpen()) {
+			return;
+		}
 		Vector3 mousePosition = Input.mousePosition;
 		if (_mouseDown) {
-			Debug.Log("Dragging: ");
+			// Debug.Log("Dragging: ");
 			// start dragging the map
 			Slide(mousePosition.x - _prevMousePos.x, mousePosition.y - _prevMousePos.y, -0.08f);
 			_prevMousePos = mousePosition;
@@ -91,7 +89,7 @@ public class GamePlayerSrc : MonoBehaviour
 			_mouseDown = false;
 			float distance = Vector3.Distance(mousePosition, _initialMousePosition);
 			// Didnt drag, just clicked
-			Debug.Log("Dragged : " + distance);
+			// Debug.Log("Dragged : " + distance);
 			if (distance == 0) {
 				Vector3 pos = Camera.main.ScreenToWorldPoint(mousePosition);
 				ClickOn(pos);
@@ -100,10 +98,8 @@ public class GamePlayerSrc : MonoBehaviour
 		if (Input.GetKey(KeyCode.LeftControl)) {
 			//
 			if (Input.GetKeyDown(KeyCode.DownArrow)) {
-				Debug.Log("Zoom");
 				Zoom(true);
 			} else if (Input.GetKeyDown(KeyCode.UpArrow)) {
-				Debug.Log("swosh");
 				Zoom(false);
 			}
 		} else {
@@ -113,11 +109,9 @@ public class GamePlayerSrc : MonoBehaviour
 			}
 		}
 		if (Input.GetKeyDown(KeyCode.Z)) {
-			Debug.Log("Zoom");
 			Zoom(true);
 		}
 		if (Input.GetKeyDown(KeyCode.X)) {
-			Debug.Log("swosh");
 			Zoom(false);
 		}
 	}
@@ -155,5 +149,30 @@ public class GamePlayerSrc : MonoBehaviour
 		mobMods.Add(Territory.Type.CIRCLE, 4);
 		// Onliy highlight path on selecting unit
 		path.HighlightPath(coord, 1, 12, mobMods);
+		switch (_state) {
+			case 1: ClickState1(coord); break;
+			case 2: ClickState2(coord); break;
+			default: ClickState0(coord); break;
+		}
+	}
+
+	void ClickState0(Vector3Int coord) {
+		ArmyUnit u = map.GetUnitAt(coord);
+		Territory t = map.GetTerritoryAt(coord);
+		if (u != null) {
+			//
+		} else if (t.IsSummoningCircle()) {
+			// you can build and if it's your turn open a menu
+			// just open the menu
+			menus.OpenShop();
+		}
+	}
+
+	void ClickState1(Vector3Int pos) {
+		//
+	}
+
+	void ClickState2(Vector3Int pos) {
+		//
 	}
 }
