@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System;
 
+// This class is currently a general highlighter for targets
 public class MovementHighlighter : MonoBehaviour
 {
 
@@ -39,6 +41,24 @@ public class MovementHighlighter : MonoBehaviour
 	// Update is called once per frame
 	void Update() {}
 
+	public void Clear() {
+		highlightmap.ClearAllTiles();
+	}
+
+	public void Highlight(TargetHighlight[] targets) {
+		foreach (TargetHighlight t in targets) {
+			Vector3Int v = t.GetCoord();
+			HighlightType h = t.GetHighlight();
+			Tile s;
+			if ( h == HighlightType.RED) {
+				s = Instantiate(inRange);
+			} else {
+				s = Instantiate(highlighted);
+			}
+			highlightmap.SetTile(v, s);
+		}
+	}
+
 	public void HighlightPath(Vector3Int pos, int team, int mobility, Dictionary<Territory.Type, int> modifiers) {
 		// fromt eh initial path we will travel in depth until we spend all mobility
 		// HashSet<Vector3Int> highlights = new HashSet<Vector3Int>();
@@ -54,11 +74,12 @@ public class MovementHighlighter : MonoBehaviour
 			Tile s = Instantiate(highlighted);
 			highlightmap.SetTile(v, s);
 		}
+		// Get enemies in range
 	}
 
 	public HashSet<Vector3Int> GetViable(Vector3Int current, int team, int mobilityLeft, Dictionary<Territory.Type, int> mods, HashSet<Vector3Int> visitedBefore) {
 		HashSet<Vector3Int> visited = visitedBefore;
-		visited.Add(current);
+		visited.Add(current); // TODO: check if unit is here
 		if (CanMoveOver(team)) {
 			for (int i = 0; i < 6; i++) {
 				Vector3Int neighbour = GetNeighbour(current, i);
@@ -96,4 +117,20 @@ public class MovementHighlighter : MonoBehaviour
 		Vector3Int adj = new Vector3Int((int)(pos.x + aux.x), (int)(pos.y + aux.y), 0);
 		return adj;
 	}
+
+	// private void DebugSet(HashSet<Vector3Int> set) {
+	// 	string buffer = "";
+	// 	foreach(Vector3Int v in set) {
+	// 		buffer += v.ToString();
+	// 	}
+	// 	Debug.Log(string.Format("Set [{0}]", buffer));
+	// }
+
+	// private void DebugMap(Dictionary<Territory.Type, int> mods) {
+	// 	string buffer = "";
+	// 	foreach(KeyValuePair<Territory.Type, int> t in  mods) {
+	// 		buffer += string.Format("({0}, {1})", Enum.GetName(typeof(Territory.Type), t.Key), t.Value);
+	// 	}
+	// 	Debug.Log(string.Format("Map [{0}]", buffer));
+	// }
 }
